@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -38,157 +39,165 @@ class NearbyStopsSheet extends ConsumerWidget {
     // Get the nearby stops data, which combines GPS position + stop list
     final nearbyAsync = ref.watch(nearbyStopsProvider);
 
-    return Container(
-      // Constrain the sheet height to 60% of the screen
-      height: MediaQuery.of(context).size.height * 0.6,
-      decoration: const BoxDecoration(
-        // Cupertino-style sheet with rounded top corners
-        color: CupertinoColors.systemBackground,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      child: Column(
-        children: [
-          // --- Drag handle ---
-          // A small gray pill at the top indicating the sheet is draggable.
-          // Standard iOS bottom sheet affordance.
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Center(
-              child: Container(
-                width: 36,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: CupertinoColors.systemGrey3,
-                  borderRadius: BorderRadius.circular(2.5),
+    // Wrapped in Material to fix yellow underline text issues
+    return Material(
+      type: MaterialType.transparency,
+      child: Container(
+        // Constrain the sheet height to 60% of the screen
+        height: MediaQuery.of(context).size.height * 0.6,
+        decoration: BoxDecoration(
+          // Cupertino-style sheet with rounded top corners
+          // systemBackground automatically adapts to light/dark mode
+          color: CupertinoColors.systemBackground.resolveFrom(context),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: Column(
+          children: [
+            // --- Drag handle ---
+            // A small gray pill at the top indicating the sheet is draggable.
+            // Standard iOS bottom sheet affordance.
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Center(
+                child: Container(
+                  width: 36,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.systemGrey3.resolveFrom(context),
+                    borderRadius: BorderRadius.circular(2.5),
+                  ),
                 ),
               ),
             ),
-          ),
 
-          // --- Header row ---
-          // "Nearby Stops" title with a distance radius indicator on the right.
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Nearby Stops',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                // Distance radius indicator shows the search radius
-                // so users understand the scope of the results.
-                Text(
-                  'Within ${DistanceUtils.formatDistance(MapConstants.nearbyRadiusMeters)}',
-                  style: const TextStyle(
-                    color: CupertinoColors.systemGrey,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // --- Separator line ---
-          Container(
-            height: 0.5,
-            color: CupertinoColors.separator,
-          ),
-
-          // --- Stop list content ---
-          // Handles loading, error, and data states from the nearby stops provider.
-          Expanded(
-            child: nearbyAsync.when(
-              // --- Loading state ---
-              // Shows a centered activity indicator while GPS position
-              // or stop data is being loaded.
-              loading: () => const Center(
-                child: CupertinoActivityIndicator(),
-              ),
-
-              // --- Error state (likely location unavailable) ---
-              // Shows a friendly message when GPS is denied or unavailable.
-              // Uses the location icon to visually communicate the issue.
-              error: (error, _) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        CupertinoIcons.location_slash,
-                        size: 48,
-                        color: CupertinoColors.systemGrey,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Location Unavailable',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Enable location services to see nearby stops.',
-                        style: TextStyle(
-                          color: CupertinoColors.systemGrey.resolveFrom(context),
-                          fontSize: 14,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // --- Data state: list of nearby stops ---
-              data: (nearbyStops) {
-                // Handle empty results (no stops within radius)
-                if (nearbyStops.isEmpty) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32),
-                      child: Text(
-                        'No stops found within 500m.\nTry moving to a different area.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: CupertinoColors.systemGrey,
-                          fontSize: 14,
-                        ),
-                      ),
+            // --- Header row ---
+            // "Nearby Stops" title with a distance radius indicator on the right.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Nearby Stops',
+                    style: TextStyle(
+                      color: CupertinoColors.activeBlue.resolveFrom(context),
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
-                  );
-                }
-
-                // Build a scrollable list of stop rows
-                return ListView.separated(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: nearbyStops.length,
-                  // Thin separator line between stop rows
-                  separatorBuilder: (_, __) => Container(
-                    height: 0.5,
-                    margin: const EdgeInsets.only(left: 16),
-                    color: CupertinoColors.separator,
                   ),
-                  itemBuilder: (context, index) {
-                    final (stop, distance) = nearbyStops[index];
-                    return _NearbyStopRow(
-                      stopId: stop.stopId,
-                      stopName: stop.stopName,
-                      distance: distance,
-                      onTap: () => AppRouter.pushStopDetail(context, stop.stopId),
-                    );
-                  },
-                );
-              },
+
+                  // Distance radius indicator shows the search radius
+                  // so users understand the scope of the results.
+                  Text(
+                    'Within ${DistanceUtils.formatDistance(MapConstants.nearbyRadiusMeters)}',
+                    style: TextStyle(
+                      color: CupertinoColors.systemGrey.resolveFrom(context),
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+
+            // --- Separator line ---
+            Container(
+              height: 0.5,
+              color: CupertinoColors.separator.resolveFrom(context),
+            ),
+
+            // --- Stop list content ---
+            // Handles loading, error, and data states from the nearby stops provider.
+            Expanded(
+              child: nearbyAsync.when(
+                // --- Loading state ---
+                // Shows a centered activity indicator while GPS position
+                // or stop data is being loaded.
+                loading: () => Center(
+                  child: CupertinoActivityIndicator(),
+                ),
+
+                // --- Error state (likely location unavailable) ---
+                // Shows a friendly message when GPS is denied or unavailable.
+                // Uses the location icon to visually communicate the issue.
+                error: (error, _) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          CupertinoIcons.location_slash,
+                          size: 48,
+                          color: CupertinoColors.systemGrey.resolveFrom(context),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Location Unavailable',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: CupertinoColors.label.resolveFrom(context),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Enable location services to see nearby stops.',
+                          style: TextStyle(
+                            color: CupertinoColors.systemGrey.resolveFrom(context),
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // --- Data state: list of nearby stops ---
+                data: (nearbyStops) {
+                  // Handle empty results (no stops within radius)
+                  if (nearbyStops.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Text(
+                          'No stops found within 500m.\nTry moving to a different area.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: CupertinoColors.systemGrey.resolveFrom(context),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  // Build a scrollable list of stop rows
+                  return ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: nearbyStops.length,
+                    // Thin separator line between stop rows
+                    separatorBuilder: (_, __) => Container(
+                      height: 0.5,
+                      margin: const EdgeInsets.only(left: 16),
+                      color: CupertinoColors.separator.resolveFrom(context),
+                    ),
+                    itemBuilder: (context, index) {
+                      final (stop, distance) = nearbyStops[index];
+                      return _NearbyStopRow(
+                        stopId: stop.stopId,
+                        stopName: stop.stopName,
+                        distance: distance,
+                        onTap: () =>
+                            AppRouter.pushStopDetail(context, stop.stopId),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -238,10 +247,10 @@ class _NearbyStopRow extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     stopName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: CupertinoColors.label,
+                      color: CupertinoColors.label.resolveFrom(context),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -253,8 +262,8 @@ class _NearbyStopRow extends ConsumerWidget {
                 // Distance from user, formatted as "150m" or "1.2km"
                 Text(
                   DistanceUtils.formatDistance(distance),
-                  style: const TextStyle(
-                    color: CupertinoColors.systemGrey,
+                  style: TextStyle(
+                    color: CupertinoColors.systemGrey.resolveFrom(context),
                     fontSize: 14,
                   ),
                 ),
@@ -266,26 +275,26 @@ class _NearbyStopRow extends ConsumerWidget {
             // --- Bottom row: next 2-3 arrivals with ETA ---
             // Shows the soonest buses arriving at this stop.
             etasAsync.when(
-              loading: () => const Text(
+              loading: () => Text(
                 'Loading arrivals...',
                 style: TextStyle(
-                  color: CupertinoColors.systemGrey,
+                  color: CupertinoColors.systemGrey.resolveFrom(context),
                   fontSize: 13,
                 ),
               ),
-              error: (_, __) => const Text(
+              error: (_, __) => Text(
                 'No arrival data',
                 style: TextStyle(
-                  color: CupertinoColors.systemGrey,
+                  color: CupertinoColors.systemGrey.resolveFrom(context),
                   fontSize: 13,
                 ),
               ),
               data: (etas) {
                 if (etas.isEmpty) {
-                  return const Text(
+                  return Text(
                     'No upcoming arrivals',
                     style: TextStyle(
-                      color: CupertinoColors.systemGrey,
+                      color: CupertinoColors.systemGrey.resolveFrom(context),
                       fontSize: 13,
                     ),
                   );
@@ -307,10 +316,10 @@ class _NearbyStopRow extends ConsumerWidget {
                 }).whereType<String>();
 
                 if (upcomingEtas.isEmpty) {
-                  return const Text(
+                  return Text(
                     'No upcoming arrivals',
                     style: TextStyle(
-                      color: CupertinoColors.systemGrey,
+                      color: CupertinoColors.systemGrey.resolveFrom(context),
                       fontSize: 13,
                     ),
                   );
@@ -319,8 +328,8 @@ class _NearbyStopRow extends ConsumerWidget {
                 // Join arrival times with " | " separator
                 return Text(
                   upcomingEtas.join(' | '),
-                  style: const TextStyle(
-                    color: CupertinoColors.activeBlue,
+                  style: TextStyle(
+                    color: CupertinoColors.activeBlue.resolveFrom(context),
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),

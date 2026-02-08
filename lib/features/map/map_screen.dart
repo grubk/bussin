@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:bussin/providers/selected_route_provider.dart';
@@ -213,8 +214,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// The sheet shows stops within 500m of the user, sorted by distance,
   /// with live arrival times for each stop.
   void _showNearbyStopsSheet(BuildContext context) {
-    showCupertinoModalPopup<void>(
+    showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
+      showDragHandle: false,
+      enableDrag: true,
+      isDismissible: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => const NearbyStopsSheet(),
     );
   }
@@ -306,24 +312,13 @@ class _NearbyButton extends StatelessWidget {
           color: CupertinoColors.systemBackground.withOpacity(0.7),
           borderRadius: BorderRadius.circular(22),
           onPressed: onPressed,
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                CupertinoIcons.location_circle,
-                size: 18,
-                color: CupertinoColors.activeBlue,
-              ),
-              SizedBox(width: 6),
-              Text(
-                'Nearby',
-                style: TextStyle(
-                  color: CupertinoColors.activeBlue,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+          child: const Text(
+            'Nearby Stops',
+            style: TextStyle(
+              color: CupertinoColors.activeBlue,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),
