@@ -5,10 +5,8 @@ import 'package:latlong2/latlong.dart' as ll;
 
 import 'package:bussin/providers/location_provider.dart';
 import 'package:bussin/providers/selected_route_provider.dart';
-import 'package:bussin/data/models/bus_stop.dart';
 import 'package:bussin/data/models/vehicle_position.dart';
 import 'package:bussin/providers/shape_providers.dart';
-import 'package:bussin/providers/stop_providers.dart';
 
 import 'package:bussin/features/map/controllers/map_controller_provider.dart';
 
@@ -72,10 +70,6 @@ class BusMap extends ConsumerStatefulWidget {
         ? ref.watch(routeShapeProvider(selectedRouteId))
         : const AsyncData(<ll.LatLng>[]);
 
-    final AsyncValue<List<BusStop>> stopsAsync = selectedRouteId != null
-        ? ref.watch(stopsForRouteProvider(selectedRouteId))
-        : const AsyncData(<BusStop>[]);
-
     final vehicleList = widget.vehicles.value ?? [];
 
     final markers = <Marker>{
@@ -102,19 +96,6 @@ class BusMap extends ConsumerStatefulWidget {
             points: googlePoints,
             color: const Color(0xFF0060A9),
             width: 4,
-          ),
-        );
-      }
-    }
-
-    final stops = stopsAsync.asData?.value ?? const <BusStop>[];
-    if (stops.isNotEmpty) {
-      for (final stop in stops) {
-        markers.add(
-          Marker(
-            markerId: MarkerId('stop_${stop.stopId}'),
-            position: LatLng(stop.stopLat, stop.stopLon),
-            icon: BitmapDescriptor.defaultMarker,
           ),
         );
       }
