@@ -37,57 +37,62 @@ class AlertsScreen extends ConsumerWidget {
       ),
 
       // --- Main content: async state handling ---
-      child: SafeArea(
-        child: alertsAsync.when(
-          // --- Loading state: spinner while first poll completes ---
-          loading: () => const Center(
-            child: CupertinoActivityIndicator(),
-          ),
+      // Wrapped in Material to fix yellow underline text issues
+      child: Material(
+        type: MaterialType.transparency,
+        child: SafeArea(
+          child: alertsAsync.when(
+            // --- Loading state: spinner while first poll completes ---
+            loading: () => const Center(
+              child: CupertinoActivityIndicator(),
+            ),
 
-          // --- Error state: display error from the alerts API ---
-          error: (error, stackTrace) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    CupertinoIcons.exclamationmark_triangle,
-                    size: 40,
-                    color: CupertinoColors.systemRed,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Failed to load service alerts:\n$error',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
+            // --- Error state: display error from the alerts API ---
+            error: (error, stackTrace) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Removed 'const' because CupertinoColors.systemRed is dynamic
+                    const Icon(
+                      CupertinoIcons.exclamationmark_triangle,
+                      size: 40,
                       color: CupertinoColors.systemRed,
-                      fontSize: 15,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    Text(
+                      'Failed to load service alerts:\n$error',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: CupertinoColors.systemRed,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
+
+            // --- Data state: list of alert cards or empty state ---
+            data: (alerts) {
+              // Empty state: no active disruptions
+              if (alerts.isEmpty) {
+                return const _EmptyAlertsView();
+              }
+
+              // Scrollable list of alert cards with padding
+              return ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: alerts.length,
+                // Spacing between alert cards
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  return AlertCard(alert: alerts[index]);
+                },
+              );
+            },
           ),
-
-          // --- Data state: list of alert cards or empty state ---
-          data: (alerts) {
-            // Empty state: no active disruptions
-            if (alerts.isEmpty) {
-              return const _EmptyAlertsView();
-            }
-
-            // Scrollable list of alert cards with padding
-            return ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: alerts.length,
-              // Spacing between alert cards
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                return AlertCard(alert: alerts[index]);
-              },
-            );
-          },
         ),
       ),
     );

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -35,52 +36,57 @@ class FavoritesScreen extends ConsumerWidget {
       ),
 
       // --- Main content: async state handling ---
-      child: SafeArea(
-        child: favoritesAsync.when(
-          // --- Loading state: show spinner while SQLite query completes ---
-          loading: () => const Center(
-            child: CupertinoActivityIndicator(),
-          ),
+      // Wrapped in Material to fix yellow underline text issues
+      child: Material(
+        type: MaterialType.transparency,
+        child: SafeArea(
+          child: favoritesAsync.when(
+            // --- Loading state: show spinner while SQLite query completes ---
+            loading: () => const Center(
+              child: CupertinoActivityIndicator(),
+            ),
 
-          // --- Error state: display error message with retry info ---
-          error: (error, stackTrace) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Text(
-                'Failed to load favorites:\n$error',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: CupertinoColors.systemRed,
-                  fontSize: 15,
+            // --- Error state: display error message with retry info ---
+            error: (error, stackTrace) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Text(
+                  'Failed to load favorites:\n$error',
+                  textAlign: TextAlign.center,
+                  // Removed 'const' because CupertinoColors.systemRed is dynamic
+                  style: const TextStyle(
+                    color: CupertinoColors.systemRed,
+                    fontSize: 15,
+                  ),
                 ),
               ),
             ),
+
+            // --- Data state: show the favorites list or empty state ---
+            data: (favorites) {
+              // Empty state when the user hasn't saved any favorite stops
+              if (favorites.isEmpty) {
+                return const _EmptyFavoritesView();
+              }
+
+              // Scrollable list of favorite stop tiles with swipe-to-delete
+              return ListView.builder(
+                itemCount: favorites.length,
+                itemBuilder: (context, index) {
+                  final favorite = favorites[index];
+                  return FavoriteStopTile(
+                    favorite: favorite,
+                    // Callback triggered when the user confirms deletion
+                    onDismissed: () => _confirmAndRemoveFavorite(
+                      context,
+                      ref,
+                      favorite,
+                    ),
+                  );
+                },
+              );
+            },
           ),
-
-          // --- Data state: show the favorites list or empty state ---
-          data: (favorites) {
-            // Empty state when the user hasn't saved any favorite stops
-            if (favorites.isEmpty) {
-              return const _EmptyFavoritesView();
-            }
-
-            // Scrollable list of favorite stop tiles with swipe-to-delete
-            return ListView.builder(
-              itemCount: favorites.length,
-              itemBuilder: (context, index) {
-                final favorite = favorites[index];
-                return FavoriteStopTile(
-                  favorite: favorite,
-                  // Callback triggered when the user confirms deletion
-                  onDismissed: () => _confirmAndRemoveFavorite(
-                    context,
-                    ref,
-                    favorite,
-                  ),
-                );
-              },
-            );
-          },
         ),
       ),
     );
@@ -137,42 +143,48 @@ class _EmptyFavoritesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 40.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Star icon matching the favorite action icon used elsewhere
-            Icon(
-              CupertinoIcons.star,
-              size: 48,
-              color: CupertinoColors.systemGrey3,
-            ),
-            SizedBox(height: 16),
-
-            // Primary message
-            Text(
-              'No favorite stops yet',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: CupertinoColors.systemGrey,
+    return Material(
+      type: MaterialType.transparency,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Star icon matching the favorite action icon used elsewhere
+              // Removed 'const' because CupertinoColors.systemGrey3 is dynamic
+              const Icon(
+                CupertinoIcons.star,
+                size: 48,
+                color: CupertinoColors.systemGrey3,
               ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 8),
+              const SizedBox(height: 16),
 
-            // Instructional sub-text
-            Text(
-              'Tap the star icon on a stop to add it here',
-              style: TextStyle(
-                fontSize: 15,
-                color: CupertinoColors.systemGrey2,
+              // Primary message
+              // Removed 'const' because CupertinoColors.systemGrey is dynamic
+              const Text(
+                'No favorite stops yet',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: CupertinoColors.systemGrey,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+              const SizedBox(height: 8),
+
+              // Instructional sub-text
+              // Removed 'const' because CupertinoColors.systemGrey2 is dynamic
+              const Text(
+                'Tap the star icon on a stop to add it here',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: CupertinoColors.systemGrey2,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
