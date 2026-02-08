@@ -240,8 +240,24 @@ class _TopBar extends StatelessWidget
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
     final backgroundColor =
         theme.navigationBarTheme.backgroundColor ?? theme.colorScheme.surface;
+
+    final logo = SizedBox(
+      height: 42,
+      child: isDarkMode
+          ? ColorFiltered(
+              colorFilter: const ColorFilter.matrix(<double>[
+                -1, 0, 0, 0, 255,
+                0, -1, 0, 0, 255,
+                0, 0, -1, 0, 255,
+                0, 0, 0, 1, 0,
+              ]),
+              child: Image.asset('assets/app_icon_white.png'),
+            )
+          : Image.asset('assets/app_icon_white.png'),
+    );
 
     return Container(
       color: backgroundColor,
@@ -255,8 +271,23 @@ class _TopBar extends StatelessWidget
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                leading,
-                trailing,
+                SizedBox(
+                  width: 44,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: leading,
+                  ),
+                ),
+                Expanded(
+                  child: Center(child: logo),
+                ),
+                SizedBox(
+                  width: 44,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: trailing,
+                  ),
+                ),
               ],
             ),
           ),
