@@ -31,7 +31,7 @@ class ApiConstants {
       'https://gtfs-static.translink.ca/gtfs/google_transit.zip';
 
   /// Polling interval for vehicle position updates (high frequency for live tracking).
-  static const Duration vehiclePollInterval = Duration(seconds: 10);
+  static const Duration vehiclePollInterval = Duration(seconds: 5);
 
   /// Polling interval for trip update / ETA predictions.
   static const Duration tripUpdatePollInterval = Duration(seconds: 30);
