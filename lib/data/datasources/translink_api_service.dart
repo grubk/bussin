@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:bussin/core/constants/api_constants.dart';
@@ -53,17 +54,37 @@ class TranslinkApiService {
   /// for protobuf, and includes a single retry on network failure.
   Future<Uint8List> _fetchProtobufData(String baseUrl) async {
     final uri = Uri.parse('$baseUrl?apikey=$_apiKey');
+    final stopwatch = Stopwatch()..start();
+
+    developer.log(
+      '🚀 Starting API request to $baseUrl',
+      name: 'TranslinkAPI',
+    );
 
     // Attempt the request with one retry on network failure
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
+        if (attempt > 0) {
+          developer.log(
+            '🔄 Retry attempt ${attempt + 1} for $baseUrl',
+            name: 'TranslinkAPI',
+          );
+        }
+
         final response = await _client.get(
           uri,
           headers: {'Accept': 'application/x-protobuf'},
         ).timeout(ApiConstants.httpTimeout);
 
+        stopwatch.stop();
+
         // Validate HTTP response status
         if (response.statusCode != 200) {
+          developer.log(
+            '❌ API request FAILED for $baseUrl - HTTP ${response.statusCode} - ${response.reasonPhrase} (${stopwatch.elapsedMilliseconds}ms)',
+            name: 'TranslinkAPI',
+            error: 'HTTP ${response.statusCode}',
+          );
           throw ServerException(
             message: 'API request failed for $baseUrl',
             statusCode: response.statusCode,
@@ -71,12 +92,23 @@ class TranslinkApiService {
         }
 
         // Return raw bytes - do NOT decode as string
+        final responseSize = response.bodyBytes.length;
+        developer.log(
+          '✅ API request SUCCESS for $baseUrl - ${responseSize} bytes received (${stopwatch.elapsedMilliseconds}ms)',
+          name: 'TranslinkAPI',
+        );
         return response.bodyBytes;
       } on ServerException {
         rethrow; // Don't retry server errors (4xx, 5xx)
       } catch (e) {
         // Retry on network/timeout errors, but only once
         if (attempt == 1) {
+          stopwatch.stop();
+          developer.log(
+            '❌ API request FAILED for $baseUrl after retry - ${e.toString()} (${stopwatch.elapsedMilliseconds}ms)',
+            name: 'TranslinkAPI',
+            error: e,
+          );
           throw ServerException(
             message: 'Network error after retry: ${e.toString()}',
           );

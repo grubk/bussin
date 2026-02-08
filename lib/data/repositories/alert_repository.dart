@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:bussin/core/errors/exceptions.dart';
 import 'package:bussin/data/datasources/translink_api_service.dart';
 import 'package:bussin/data/models/service_alert.dart';
@@ -30,9 +31,13 @@ class AlertRepository {
   ///
   /// Caches successful results for fallback on subsequent failures.
   Future<List<ServiceAlertModel>> getServiceAlerts() async {
+    final stopwatch = Stopwatch()..start();
+    developer.log('🚨 Fetching service alerts', name: 'AlertRepository');
+
     try {
       // Fetch raw protobuf bytes from the TransLink API
       final bytes = await _apiService.fetchServiceAlerts();
+      developer.log('📦 Received ${bytes.length} bytes of alert data', name: 'AlertRepository');
 
       // Parse the protobuf binary into a FeedMessage
       // final feed = FeedMessage.fromBuffer(bytes);
@@ -100,11 +105,27 @@ class AlertRepository {
       // }
 
       _cachedAlerts = alerts;
+      stopwatch.stop();
+      developer.log(
+        '✅ Fetched ${alerts.length} service alerts (${stopwatch.elapsedMilliseconds}ms)',
+        name: 'AlertRepository',
+      );
       return alerts;
-    } on ServerException {
+    } on ServerException catch (e) {
+      stopwatch.stop();
       if (_cachedAlerts != null) {
+        developer.log(
+          '⚠️ Alert fetch failed - using cached data (${_cachedAlerts!.length} alerts) (${stopwatch.elapsedMilliseconds}ms)',
+          name: 'AlertRepository',
+          error: e,
+        );
         return _cachedAlerts!;
       }
+      developer.log(
+        '❌ Alert fetch failed - no cached data available (${stopwatch.elapsedMilliseconds}ms)',
+        name: 'AlertRepository',
+        error: e,
+      );
       rethrow;
     }
   }

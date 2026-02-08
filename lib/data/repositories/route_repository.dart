@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:bussin/data/datasources/gtfs_static_service.dart';
 import 'package:bussin/data/datasources/local_database_service.dart';
 import 'package:bussin/data/models/bus_route.dart';
@@ -48,6 +49,9 @@ class RouteRepository {
   /// Matches routes where the short name or long name contains the [query]
   /// string (case-insensitive). Limited to 20 results for performance.
   Future<List<BusRoute>> searchRoutes(String query) async {
+    final stopwatch = Stopwatch()..start();
+    developer.log('🔍 Searching routes for query: "$query"', name: 'RouteRepository');
+
     final rows = await LocalDatabaseService.db.query(
       'gtfs_routes',
       where:
@@ -55,7 +59,13 @@ class RouteRepository {
       whereArgs: ['%$query%', '%$query%'],
       limit: 20,
     );
-    return rows.map(_mapRowToRoute).toList();
+    final results = rows.map(_mapRowToRoute).toList();
+    stopwatch.stop();
+    developer.log(
+      '✅ Route search returned ${results.length} results for "$query" (${stopwatch.elapsedMilliseconds}ms)',
+      name: 'RouteRepository',
+    );
+    return results;
   }
 
   /// Forces a refresh of route data from the GTFS static ZIP file.

@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:bussin/core/errors/exceptions.dart';
 import 'package:bussin/data/datasources/translink_api_service.dart';
 import 'package:bussin/data/models/trip_update.dart';
@@ -29,9 +30,13 @@ class TripUpdateRepository {
   ///
   /// Caches successful results for fallback on subsequent failures.
   Future<List<TripUpdateModel>> getTripUpdates() async {
+    final stopwatch = Stopwatch()..start();
+    developer.log('⏰ Fetching trip updates / ETAs', name: 'TripUpdateRepository');
+
     try {
       // Fetch raw protobuf bytes from the TransLink API
       final bytes = await _apiService.fetchTripUpdates();
+      developer.log('📦 Received ${bytes.length} bytes of trip update data', name: 'TripUpdateRepository');
 
       // Parse the protobuf binary into a FeedMessage
       // final feed = FeedMessage.fromBuffer(bytes);
@@ -88,11 +93,27 @@ class TripUpdateRepository {
       // }
 
       _cachedUpdates = updates;
+      stopwatch.stop();
+      developer.log(
+        '✅ Fetched ${updates.length} trip updates (${stopwatch.elapsedMilliseconds}ms)',
+        name: 'TripUpdateRepository',
+      );
       return updates;
-    } on ServerException {
+    } on ServerException catch (e) {
+      stopwatch.stop();
       if (_cachedUpdates != null) {
+        developer.log(
+          '⚠️ Trip update fetch failed - using cached data (${_cachedUpdates!.length} updates) (${stopwatch.elapsedMilliseconds}ms)',
+          name: 'TripUpdateRepository',
+          error: e,
+        );
         return _cachedUpdates!;
       }
+      developer.log(
+        '❌ Trip update fetch failed - no cached data available (${stopwatch.elapsedMilliseconds}ms)',
+        name: 'TripUpdateRepository',
+        error: e,
+      );
       rethrow;
     }
   }

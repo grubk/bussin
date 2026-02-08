@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:bussin/data/datasources/gtfs_static_service.dart';
 import 'package:bussin/data/datasources/local_database_service.dart';
 import 'package:bussin/data/models/bus_stop.dart';
@@ -59,13 +60,22 @@ class StopRepository {
   /// the stop code exactly matches (for numeric lookups).
   /// Limited to 20 results for performance.
   Future<List<BusStop>> searchStops(String query) async {
+    final stopwatch = Stopwatch()..start();
+    developer.log('🔍 Searching stops for query: "$query"', name: 'StopRepository');
+
     final rows = await LocalDatabaseService.db.query(
       'gtfs_stops',
       where: 'stop_name LIKE ? OR stop_code = ?',
       whereArgs: ['%$query%', query],
       limit: 20,
     );
-    return rows.map(_mapRowToStop).toList();
+    final results = rows.map(_mapRowToStop).toList();
+    stopwatch.stop();
+    developer.log(
+      '✅ Stop search returned ${results.length} results for "$query" (${stopwatch.elapsedMilliseconds}ms)',
+      name: 'StopRepository',
+    );
+    return results;
   }
 
   /// Finds all stops served by a specific route.

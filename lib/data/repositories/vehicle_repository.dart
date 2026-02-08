@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:bussin/core/errors/exceptions.dart';
 import 'package:bussin/data/datasources/translink_api_service.dart';
 import 'package:bussin/data/models/vehicle_position.dart';
@@ -32,9 +33,13 @@ class VehicleRepository {
   /// On success, updates the in-memory cache.
   /// On failure, returns the cached result if available; otherwise rethrows.
   Future<List<VehiclePositionModel>> getVehiclePositions() async {
+    final stopwatch = Stopwatch()..start();
+    developer.log('🚌 Fetching vehicle positions', name: 'VehicleRepository');
+
     try {
       // Fetch raw protobuf bytes from the TransLink API
       final bytes = await _apiService.fetchVehiclePositions();
+      developer.log('📦 Received ${bytes.length} bytes of vehicle position data', name: 'VehicleRepository');
 
       // Parse the protobuf binary into a FeedMessage
       // final feed = FeedMessage.fromBuffer(bytes);
@@ -73,12 +78,28 @@ class VehicleRepository {
 
       // Update the in-memory cache with the latest successful result
       _cachedPositions = positions;
+      stopwatch.stop();
+      developer.log(
+        '✅ Fetched ${positions.length} vehicle positions (${stopwatch.elapsedMilliseconds}ms)',
+        name: 'VehicleRepository',
+      );
       return positions;
-    } on ServerException {
+    } on ServerException catch (e) {
+      stopwatch.stop();
       // On server/network errors, return cached data if available
       if (_cachedPositions != null) {
+        developer.log(
+          '⚠️ Vehicle position fetch failed - using cached data (${_cachedPositions!.length} vehicles) (${stopwatch.elapsedMilliseconds}ms)',
+          name: 'VehicleRepository',
+          error: e,
+        );
         return _cachedPositions!;
       }
+      developer.log(
+        '❌ Vehicle position fetch failed - no cached data available (${stopwatch.elapsedMilliseconds}ms)',
+        name: 'VehicleRepository',
+        error: e,
+      );
       rethrow;
     }
   }

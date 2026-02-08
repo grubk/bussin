@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:archive/archive.dart';
 import 'package:csv/csv.dart';
@@ -21,6 +22,9 @@ class GtfsStaticService {
   /// The ZIP file (~15MB) is downloaded to a temp directory, then CSV files
   /// are extracted to the app's documents directory for parsing.
   Future<void> downloadAndExtractGtfsData() async {
+    final stopwatch = Stopwatch()..start();
+    developer.log('📥 Starting GTFS static data download', name: 'GtfsStaticService');
+
     try {
       // Download the ZIP file from TransLink
       final response = await http.get(
@@ -28,14 +32,28 @@ class GtfsStaticService {
       ).timeout(const Duration(minutes: 2));
 
       if (response.statusCode != 200) {
+        developer.log(
+          '❌ GTFS download FAILED - HTTP ${response.statusCode}',
+          name: 'GtfsStaticService',
+          error: 'HTTP ${response.statusCode}',
+        );
         throw ServerException(
           message: 'Failed to download GTFS static data',
           statusCode: response.statusCode,
         );
       }
 
+      developer.log(
+        '✅ GTFS ZIP downloaded successfully - ${response.bodyBytes.length} bytes',
+        name: 'GtfsStaticService',
+      );
+
       // Decode the ZIP archive from the response bytes
       final archive = ZipDecoder().decodeBytes(response.bodyBytes);
+      developer.log(
+        '📦 Extracting ${archive.length} files from GTFS ZIP',
+        name: 'GtfsStaticService',
+      );
 
       // Get the app documents directory for storing extracted files
       final appDir = await getApplicationDocumentsDirectory();
@@ -47,16 +65,30 @@ class GtfsStaticService {
       }
 
       // Extract each file from the archive
+      int filesExtracted = 0;
       for (final file in archive) {
         if (file.isFile) {
           final outputFile = File('${gtfsDir.path}/${file.name}');
           await outputFile.writeAsBytes(file.content as List<int>);
+          filesExtracted++;
         }
       }
 
       // Record the download timestamp
       await setLastDownloadTime(DateTime.now());
+      
+      stopwatch.stop();
+      developer.log(
+        '✅ GTFS data extraction complete - $filesExtracted files extracted (${stopwatch.elapsedMilliseconds}ms)',
+        name: 'GtfsStaticService',
+      );
     } catch (e) {
+      stopwatch.stop();
+      developer.log(
+        '❌ GTFS download/extraction FAILED (${stopwatch.elapsedMilliseconds}ms)',
+        name: 'GtfsStaticService',
+        error: e,
+      );
       if (e is ServerException) rethrow;
       throw ServerException(message: 'GTFS download failed: ${e.toString()}');
     }
@@ -67,11 +99,19 @@ class GtfsStaticService {
   /// The first row is treated as headers and used as keys for subsequent rows.
   /// [filename] should be just the file name (e.g., "routes.txt").
   Future<List<Map<String, String>>> parseCsvFile(String filename) async {
+    final stopwatch = Stopwatch()..start();
+    developer.log('📄 Parsing GTFS CSV file: $filename', name: 'GtfsStaticService');
+
     try {
       final appDir = await getApplicationDocumentsDirectory();
       final file = File('${appDir.path}/gtfs/$filename');
 
       if (!await file.exists()) {
+        developer.log(
+          '❌ GTFS CSV file not found: $filename',
+          name: 'GtfsStaticService',
+          error: 'File not found',
+        );
         throw const ParseException(message: 'GTFS CSV file not found');
       }
 
@@ -84,7 +124,10 @@ class GtfsStaticService {
         shouldParseNumbers: false,
       ).convert(csvString);
 
-      if (rows.isEmpty) return [];
+      if (rows.isEmpty) {
+        developer.log('⚠️ Empty CSV file: $filename', name: 'GtfsStaticService');
+        return [];
+      }
 
       // First row contains column headers
       final headers = rows.first.map((e) => e.toString().trim()).toList();
@@ -102,8 +145,20 @@ class GtfsStaticService {
         result.add(map);
       }
 
+      stopwatch.stop();
+      developer.log(
+        '✅ Parsed $filename - ${result.length} records (${stopwatch.elapsedMilliseconds}ms)',
+        name: 'GtfsStaticService',
+      );
+
       return result;
     } catch (e) {
+      stopwatch.stop();
+      developer.log(
+        '❌ CSV parse FAILED for $filename (${stopwatch.elapsedMilliseconds}ms)',
+        name: 'GtfsStaticService',
+        error: e,
+      );
       if (e is ParseException) rethrow;
       throw ParseException(message: 'CSV parse error: ${e.toString()}');
     }
