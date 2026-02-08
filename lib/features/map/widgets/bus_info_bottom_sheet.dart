@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,7 +24,7 @@ import 'package:bussin/navigation/app_router.dart';
 /// │                                          │
 /// │  ┌──────┐                                │
 /// │  │  49  │  UBC / Metrotown              │
-/// │  └──────┘  Last updated: 15s ago        │
+/// │  └──────┘  Last updated: 0:15            │
 /// │                                          │
 /// │  Speed: 32 km/h                          │
 /// │                                          │
@@ -45,7 +46,7 @@ import 'package:bussin/navigation/app_router.dart';
 /// - "View Full Route": navigates to RouteDetailScreen
 /// - "Set Arrival Alert": placeholder for notification scheduling
 /// ---------------------------------------------------------------------------
-class BusInfoBottomSheet extends ConsumerWidget {
+class BusInfoBottomSheet extends ConsumerStatefulWidget {
   /// The vehicle position data for the tapped bus marker.
   final VehiclePositionModel vehicle;
 
@@ -55,13 +56,54 @@ class BusInfoBottomSheet extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BusInfoBottomSheet> createState() => _BusInfoBottomSheetState();
+}
+
+class _BusInfoBottomSheetState extends ConsumerState<BusInfoBottomSheet> {
+  /// Timer that ticks every second to update the elapsed time display
+  Timer? _timer;
+  
+  /// Elapsed seconds since the bottom sheet was opened
+  int _elapsedSeconds = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Start the timer immediately when the sheet opens
+    _startTimer();
+  }
+
+  @override
+  void dispose() {
+    // Cancel the timer when the sheet is dismissed
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  /// Starts a timer that increments [_elapsedSeconds] every second
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        _elapsedSeconds++;
+      });
+    });
+  }
+
+  /// Formats the elapsed seconds into a "M:SS" format
+  String _formatElapsedTime() {
+    final minutes = _elapsedSeconds ~/ 60;
+    final seconds = _elapsedSeconds % 60;
+    return '$minutes:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
     // Fetch the route details for the header badge color and name
-    final routeAsync = ref.watch(routeProvider(vehicle.routeId));
+    final routeAsync = ref.watch(routeProvider(widget.vehicle.routeId));
 
     // Fetch the trip update for this vehicle's current trip.
     // Contains per-stop arrival predictions (ETAs).
-    final tripUpdateAsync = ref.watch(tripUpdateProvider(vehicle.tripId));
+    final tripUpdateAsync = ref.watch(tripUpdateProvider(widget.vehicle.tripId));
 
     return Container(
       // Limit sheet height to 55% of screen for readability
@@ -136,17 +178,17 @@ class BusInfoBottomSheet extends ConsumerWidget {
   ) {
     return routeAsync.when(
       loading: () => _buildHeaderContent(
-        routeShortName: vehicle.routeId,
+        routeShortName: widget.vehicle.routeId,
         routeLongName: 'Loading...',
         backgroundColor: const Color(0xFF0060A9),
       ),
       error: (_, __) => _buildHeaderContent(
-        routeShortName: vehicle.routeId,
+        routeShortName: widget.vehicle.routeId,
         routeLongName: '',
         backgroundColor: const Color(0xFF0060A9),
       ),
       data: (route) => _buildHeaderContent(
-        routeShortName: route?.routeShortName ?? vehicle.routeId,
+        routeShortName: route?.routeShortName ?? widget.vehicle.routeId,
         routeLongName: route?.routeLongName ?? '',
         backgroundColor: _parseColor(route?.routeColor),
       ),
@@ -197,11 +239,11 @@ class BusInfoBottomSheet extends ConsumerWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               // Show the vehicle label if available (e.g., bus fleet number)
-              if (vehicle.vehicleLabel != null)
+              if (widget.vehicle.vehicleLabel != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 2),
                   child: Text(
-                    'Vehicle ${vehicle.vehicleLabel}',
+                    'Vehicle ${widget.vehicle.vehicleLabel}',
                     style: const TextStyle(
                       color: CupertinoColors.systemGrey,
                       fontSize: 13,
@@ -215,10 +257,10 @@ class BusInfoBottomSheet extends ConsumerWidget {
     );
   }
 
-  /// Builds the "Last updated: Xs ago" timestamp display.
+  /// Builds the "Last updated: M:SS" timer display.
   ///
-  /// Uses [TimeUtils.timeAgo] to format the vehicle's timestamp into
-  /// a human-readable relative time string (e.g., "15s ago", "2 min ago").
+  /// Shows a timer that counts up from 0:00 every second since the
+  /// bottom sheet was opened (clicked on the bus).
   Widget _buildLastUpdated() {
     return Row(
       children: [
@@ -229,7 +271,7 @@ class BusInfoBottomSheet extends ConsumerWidget {
         ),
         const SizedBox(width: 4),
         Text(
-          'Last updated: ${TimeUtils.timeAgo(vehicle.timestamp)}',
+          'Last updated: ${_formatElapsedTime()}',
           style: const TextStyle(
             color: CupertinoColors.systemGrey,
             fontSize: 13,
@@ -246,8 +288,8 @@ class BusInfoBottomSheet extends ConsumerWidget {
   /// Shows "N/A" if speed data is not reported by the vehicle.
   Widget _buildSpeed() {
     // Convert m/s to km/h: 1 m/s = 3.6 km/h
-    final speedKmh = vehicle.speed != null
-        ? (vehicle.speed! * 3.6).round()
+    final speedKmh = widget.vehicle.speed != null
+        ? (widget.vehicle.speed! * 3.6).round()
         : null;
 
     return Row(
@@ -324,7 +366,7 @@ class BusInfoBottomSheet extends ConsumerWidget {
 
             // Filter to only show future stops (based on current stop sequence).
             // Then take the first 4 for a concise view.
-            final currentSeq = vehicle.currentStopSequence ?? 0;
+            final currentSeq = widget.vehicle.currentStopSequence ?? 0;
             final upcomingStops = tripUpdate.stopTimeUpdates
                 .where((stu) => stu.stopSequence >= currentSeq)
                 .take(4)
@@ -378,7 +420,7 @@ class BusInfoBottomSheet extends ConsumerWidget {
             onPressed: () {
               // Dismiss the sheet first, then navigate to route detail
               Navigator.of(context).pop();
-              AppRouter.pushRouteDetail(context, vehicle.routeId);
+              AppRouter.pushRouteDetail(context, widget.vehicle.routeId);
             },
             child: const Text(
               'View Full Route',
