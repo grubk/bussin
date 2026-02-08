@@ -33,11 +33,14 @@ class AppTheme {
     const radius = 16.0;
     const smallRadius = 12.0;
 
+    final navigationBarBackgroundColor =
+        isDark ? const Color(0xFF1C2027) : Colors.white;
+
     return base.copyWith(
       scaffoldBackgroundColor:
-          isDark ? const Color(0xFF0D0F12) : const Color(0xFFF7F7F9),
+          isDark ? navigationBarBackgroundColor : const Color(0xFFF7F7F9),
       cardTheme: base.cardTheme.copyWith(
-        color: isDark ? const Color(0xFF14171C) : Colors.white,
+        color: isDark ? const Color(0xFF20242B) : Colors.white,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
@@ -60,7 +63,7 @@ class AppTheme {
       appBarTheme: base.appBarTheme.copyWith(
         elevation: 0,
         centerTitle: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: navigationBarBackgroundColor,
         foregroundColor: colorScheme.onSurface,
         surfaceTintColor: Colors.transparent,
         titleTextStyle: base.textTheme.titleMedium?.copyWith(
@@ -71,7 +74,7 @@ class AppTheme {
       navigationBarTheme: base.navigationBarTheme.copyWith(
         elevation: 0,
         height: 72,
-        backgroundColor: isDark ? const Color(0xFF111318) : Colors.white,
+        backgroundColor: navigationBarBackgroundColor,
         indicatorColor: colorScheme.primary.withValues(alpha: 0.12),
         indicatorShape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(999),
@@ -102,7 +105,7 @@ class AppTheme {
       ),
       inputDecorationTheme: base.inputDecorationTheme.copyWith(
         filled: true,
-        fillColor: isDark ? const Color(0xFF14171C) : Colors.white,
+        fillColor: isDark ? const Color(0xFF20242B) : Colors.white,
         hintStyle: TextStyle(
           color: colorScheme.onSurfaceVariant,
           fontWeight: FontWeight.w500,
