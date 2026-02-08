@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -164,74 +165,77 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       ),
 
       // -- Main content -------------------------------------------------------
-      child: SafeArea(
-        child: Column(
-          children: [
-            // ---- Search text field ------------------------------------------
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: CupertinoSearchTextField(
-                controller: _controller,
-                focusNode: _focusNode,
-                placeholder: 'Routes, stops, or stop codes',
-                onChanged: _onSearchChanged,
-                autocorrect: false,
-                // Pressing the clear button ('X') in the text field should
-                // also reset the provider so the UI switches back to
-                // recent searches.
-                onSuffixTap: () {
-                  _controller.clear();
-                  ref.read(searchQueryProvider.notifier).clear();
-                },
-              ),
-            ),
-
-            // ---- Segmented control (Routes | Stops) -------------------------
-            // Only show the segment toggle when there is an active query.
-            // When the query is empty we show recent searches instead.
-            if (query.isNotEmpty)
+      child: Material(
+        type: MaterialType.transparency,
+        child: SafeArea(
+          child: Column(
+            children: [
+              // ---- Search text field ------------------------------------------
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16.0,
-                  vertical: 4.0,
+                  vertical: 8.0,
                 ),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: CupertinoSlidingSegmentedControl<_SearchSegment>(
-                    groupValue: _selectedSegment,
-                    children: const {
-                      _SearchSegment.routes: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Text('Routes'),
-                      ),
-                      _SearchSegment.stops: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Text('Stops'),
-                      ),
-                    },
-                    onValueChanged: (_SearchSegment? value) {
-                      if (value != null) {
-                        setState(() => _selectedSegment = value);
-                      }
-                    },
-                  ),
+                child: CupertinoSearchTextField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  placeholder: 'Routes, stops, or stop codes',
+                  onChanged: _onSearchChanged,
+                  autocorrect: false,
+                  // Pressing the clear button ('X') in the text field should
+                  // also reset the provider so the UI switches back to
+                  // recent searches.
+                  onSuffixTap: () {
+                    _controller.clear();
+                    ref.read(searchQueryProvider.notifier).clear();
+                  },
                 ),
               ),
 
-            const SizedBox(height: 8.0),
+              // ---- Segmented control (Routes | Stops) -------------------------
+              // Only show the segment toggle when there is an active query.
+              // When the query is empty we show recent searches instead.
+              if (query.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 4.0,
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: CupertinoSlidingSegmentedControl<_SearchSegment>(
+                      groupValue: _selectedSegment,
+                      children: const {
+                        _SearchSegment.routes: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Text('Routes'),
+                        ),
+                        _SearchSegment.stops: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Text('Stops'),
+                        ),
+                      },
+                      onValueChanged: (_SearchSegment? value) {
+                        if (value != null) {
+                          setState(() => _selectedSegment = value);
+                        }
+                      },
+                    ),
+                  ),
+                ),
 
-            // ---- Content area -----------------------------------------------
-            Expanded(
-              child: query.isEmpty
-                  // No query entered yet -- show recent searches.
-                  ? RecentSearches(onRouteTap: _onRouteTap)
-                  // Query is active -- show search results.
-                  : _buildSearchResults(searchResultsAsync),
-            ),
-          ],
+              const SizedBox(height: 8.0),
+
+              // ---- Content area -----------------------------------------------
+              Expanded(
+                child: query.isEmpty
+                    // No query entered yet -- show recent searches.
+                    ? RecentSearches(onRouteTap: _onRouteTap)
+                    // Query is active -- show search results.
+                    : _buildSearchResults(searchResultsAsync),
+              ),
+            ],
+          ),
         ),
       ),
     );
