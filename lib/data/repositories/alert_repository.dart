@@ -3,7 +3,7 @@ import 'package:bussin/data/datasources/translink_api_service.dart';
 import 'package:bussin/data/models/service_alert.dart';
 
 // Note: The generated protobuf file will be imported once protoc has been run.
-// import 'package:bussin/data/models/gtfs_realtime.pb.dart';
+import 'package:bussin/data/models/gtfs_realtime.pb.dart';
 
 /// Repository that fetches service alerts from the TransLink GTFS-RT V3 API,
 /// parses the protobuf response, and maps it to domain models.
@@ -35,69 +35,68 @@ class AlertRepository {
       final bytes = await _apiService.fetchServiceAlerts();
 
       // Parse the protobuf binary into a FeedMessage
-      // final feed = FeedMessage.fromBuffer(bytes);
-      // TODO: Uncomment once protobuf classes are generated.
+      final feed = FeedMessage.fromBuffer(bytes);
 
       final alerts = <ServiceAlertModel>[];
 
       // Iterate over each entity and extract alert data.
       // Alert text fields are TranslatedString objects containing
       // a list of translations; we prefer the English one.
-      //
-      // for (final entity in feed.entity) {
-      //   if (entity.hasAlert()) {
-      //     final a = entity.alert;
-      //
-      //     // Extract English text from TranslatedString, falling back to first translation
-      //     final headerText = _extractTranslatedString(a.headerText);
-      //     final descriptionText = _extractTranslatedString(a.descriptionText);
-      //
-      //     // Collect affected route IDs and stop IDs from informedEntity list
-      //     final affectedRouteIds = <String>[];
-      //     final affectedStopIds = <String>[];
-      //     for (final informed in a.informedEntity) {
-      //       if (informed.hasRouteId()) {
-      //         affectedRouteIds.add(informed.routeId);
-      //       }
-      //       if (informed.hasStopId()) {
-      //         affectedStopIds.add(informed.stopId);
-      //       }
-      //     }
-      //
-      //     // Extract active period timestamps
-      //     DateTime? activePeriodStart;
-      //     DateTime? activePeriodEnd;
-      //     if (a.activePeriod.isNotEmpty) {
-      //       final period = a.activePeriod.first;
-      //       if (period.hasStart()) {
-      //         activePeriodStart = DateTime.fromMillisecondsSinceEpoch(
-      //           period.start.toInt() * 1000,
-      //         );
-      //       }
-      //       if (period.hasEnd()) {
-      //         activePeriodEnd = DateTime.fromMillisecondsSinceEpoch(
-      //           period.end.toInt() * 1000,
-      //         );
-      //       }
-      //     }
-      //
-      //     alerts.add(
-      //       ServiceAlertModel(
-      //         id: entity.id,
-      //         headerText: headerText,
-      //         descriptionText: descriptionText,
-      //         cause: a.cause.name,
-      //         effect: a.effect.name,
-      //         affectedRouteIds:
-      //             affectedRouteIds.isNotEmpty ? affectedRouteIds : null,
-      //         affectedStopIds:
-      //             affectedStopIds.isNotEmpty ? affectedStopIds : null,
-      //         activePeriodStart: activePeriodStart,
-      //         activePeriodEnd: activePeriodEnd,
-      //       ),
-      //     );
-      //   }
-      // }
+      
+      for (final entity in feed.entity) {
+        if (entity.hasAlert()) {
+          final a = entity.alert;
+
+          // Extract English text from TranslatedString, falling back to first translation
+          final headerText = _extractTranslatedString(a.headerText);
+          final descriptionText = _extractTranslatedString(a.descriptionText);
+
+          // Collect affected route IDs and stop IDs from informedEntity list
+          final affectedRouteIds = <String>[];
+          final affectedStopIds = <String>[];
+          for (final informed in a.informedEntity) {
+            if (informed.hasRouteId()) {
+              affectedRouteIds.add(informed.routeId);
+            }
+            if (informed.hasStopId()) {
+              affectedStopIds.add(informed.stopId);
+            }
+          }
+
+          // Extract active period timestamps
+          DateTime? activePeriodStart;
+          DateTime? activePeriodEnd;
+          if (a.activePeriod.isNotEmpty) {
+            final period = a.activePeriod.first;
+            if (period.hasStart()) {
+              activePeriodStart = DateTime.fromMillisecondsSinceEpoch(
+                period.start.toInt() * 1000,
+              );
+            }
+            if (period.hasEnd()) {
+              activePeriodEnd = DateTime.fromMillisecondsSinceEpoch(
+                period.end.toInt() * 1000,
+              );
+            }
+          }
+
+          alerts.add(
+            ServiceAlertModel(
+              id: entity.id,
+              headerText: headerText,
+              descriptionText: descriptionText,
+              cause: a.cause.name,
+              effect: a.effect.name,
+              affectedRouteIds:
+                  affectedRouteIds.isNotEmpty ? affectedRouteIds : null,
+              affectedStopIds:
+                  affectedStopIds.isNotEmpty ? affectedStopIds : null,
+              activePeriodStart: activePeriodStart,
+              activePeriodEnd: activePeriodEnd,
+            ),
+          );
+        }
+      }
 
       _cachedAlerts = alerts;
       return alerts;
@@ -121,18 +120,18 @@ class AlertRepository {
         .toList();
   }
 
-  // /// Extracts English text from a protobuf TranslatedString.
-  // ///
-  // /// Prefers the English translation; falls back to the first available
-  // /// translation if English is not found.
-  // String _extractTranslatedString(TranslatedString translatedString) {
-  //   if (translatedString.translation.isEmpty) return '';
-  //   try {
-  //     return translatedString.translation
-  //         .firstWhere((t) => t.language == 'en')
-  //         .text;
-  //   } catch (_) {
-  //     return translatedString.translation.first.text;
-  //   }
-  // }
+  /// Extracts English text from a protobuf TranslatedString.
+  ///
+  /// Prefers the English translation; falls back to the first available
+  /// translation if English is not found.
+  String _extractTranslatedString(TranslatedString translatedString) {
+    if (translatedString.translation.isEmpty) return '';
+    try {
+      return translatedString.translation
+          .firstWhere((t) => t.language == 'en')
+          .text;
+    } catch (_) {
+      return translatedString.translation.first.text;
+    }
+  }
 }

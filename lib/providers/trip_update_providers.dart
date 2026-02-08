@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:bussin/core/constants/api_constants.dart';
 import 'package:bussin/data/datasources/translink_api_service.dart';
 import 'package:bussin/data/models/trip_update.dart';
 import 'package:bussin/data/repositories/trip_update_repository.dart';
 import 'package:bussin/providers/vehicle_providers.dart';
+import 'package:bussin/providers/route_providers.dart';
 
 /// ---------------------------------------------------------------------------
 /// Trip Update Providers
@@ -16,10 +18,15 @@ import 'package:bussin/providers/vehicle_providers.dart';
 /// Singleton instance of [TripUpdateRepository].
 ///
 /// Reuses the shared [TranslinkApiService] from [translinkApiServiceProvider]
-/// to avoid creating duplicate HTTP clients.
+/// to avoid creating duplicate HTTP clients. Also injects [LocalDatabaseService]
+/// to resolve missing stop IDs in GTFS-RT trip updates.
 final tripUpdateRepositoryProvider = Provider<TripUpdateRepository>((ref) {
   final apiService = ref.watch(translinkApiServiceProvider);
-  return TripUpdateRepository(apiService: apiService);
+  final dbService = ref.watch(localDatabaseServiceProvider);
+  return TripUpdateRepository(
+    apiService: apiService,
+    dbService: dbService,
+  );
 });
 
 /// Stream of all trip updates, polling every 30 seconds.
@@ -50,14 +57,32 @@ final etasForStopProvider = Provider.autoDispose
   final updates = ref.watch(tripUpdatesProvider);
 
   return updates.whenData((allUpdates) {
+    debugPrint('[ETAs] Filtering for stopId="$stopId", have ${allUpdates.length} trip updates');
+    
     // Collect all stop time updates matching this stop ID
     final etas = <StopTimeUpdateModel>[];
+    int totalStopsChecked = 0;
+    
     for (final update in allUpdates) {
       for (final stopTime in update.stopTimeUpdates) {
+        totalStopsChecked++;
         if (stopTime.stopId == stopId) {
           etas.add(stopTime);
         }
       }
+    }
+
+    debugPrint('[ETAs] Checked $totalStopsChecked stops, found ${etas.length} matches');
+    
+    if (etas.isEmpty && allUpdates.isNotEmpty) {
+      // Sample a few stop IDs to see what we have
+      final samples = allUpdates
+          .take(3)
+          .expand((u) => u.stopTimeUpdates.take(2))
+          .map((s) => '"${s.stopId}"')
+          .take(6)
+          .join(', ');
+      debugPrint('[ETAs] Sample stopIds in feed: $samples');
     }
 
     // Sort by predicted arrival time (earliest first)

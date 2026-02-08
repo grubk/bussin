@@ -99,6 +99,7 @@ class LocalDatabaseService {
       )
     ''');
     await db.execute('CREATE INDEX idx_stop_times_stop ON gtfs_stop_times(stop_id)');
+    await db.execute('CREATE INDEX idx_stop_times_trip_seq ON gtfs_stop_times(trip_id, stop_sequence)');
 
     await db.execute('''
       CREATE TABLE gtfs_shapes (
@@ -204,5 +205,46 @@ class LocalDatabaseService {
     await db.execute('DELETE FROM gtfs_stops');
     await db.execute('DELETE FROM gtfs_routes');
     debugPrint('[DB] ✓ All GTFS tables cleared');
+  }
+
+  /// Looks up the stop_id for a given trip_id and stop_sequence.
+  ///
+  /// This is used to resolve missing stop_id fields in GTFS-RT trip updates,
+  /// where TransLink only provides stop_sequence numbers.
+  ///
+  /// Returns null if the trip/sequence combination is not found in the
+  /// gtfs_stop_times table.
+  Future<String?> getStopIdForTripSequence(
+    String tripId,
+    int stopSequence,
+  ) async {
+    debugPrint('[DB-Lookup] Querying: tripId=$tripId, seq=$stopSequence');
+    
+    final results = await db.query(
+      'gtfs_stop_times',
+      columns: ['stop_id'],
+      where: 'trip_id = ? AND stop_sequence = ?',
+      whereArgs: [tripId, stopSequence],
+      limit: 1,
+    );
+
+    if (results.isEmpty) {
+      debugPrint('[DB-Lookup] ❌ No match found');
+      return null;
+    }
+    
+    final stopId = results.first['stop_id'] as String?;
+    debugPrint('[DB-Lookup] ✅ Found: stopId=$stopId');
+    return stopId;
+  }
+
+  /// Returns the count of rows in the gtfs_stop_times table.
+  ///
+  /// Used for diagnostics to verify GTFS data was loaded properly.
+  Future<int> getStopTimesCount() async {
+    final result = await db.rawQuery('SELECT COUNT(*) as count FROM gtfs_stop_times');
+    final count = Sqflite.firstIntValue(result) ?? 0;
+    debugPrint('[DB] stop_times table has $count rows');
+    return count;
   }
 }

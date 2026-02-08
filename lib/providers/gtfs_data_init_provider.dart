@@ -206,6 +206,10 @@ class GtfsDataInitNotifier extends Notifier<GtfsInitStatus> {
       }).toList();
       await dbService.bulkInsertStopTimes(stopTimeDbRows);
       debugPrint('[GTFS-Init] ✓ Inserted ${stopTimeDbRows.length} stop_times into SQLite');
+      
+      // Verify stop_times were actually inserted
+      final stopTimesCount = await dbService.getStopTimesCount();
+      debugPrint('[GTFS-Init] ✓ Verification: stop_times table has $stopTimesCount rows');
 
       // ---- Step 8: Parse and import shapes.txt ----
       state = const GtfsInitStatus(
