@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -140,42 +141,42 @@ class _EmptyHistoryView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 40.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Clock icon matching the history navigation icon
-            Icon(
-              CupertinoIcons.clock,
-              size: 48,
-              color: CupertinoColors.systemGrey3,
-            ),
-            SizedBox(height: 16),
-
-            // Primary message
-            Text(
-              'No route history yet',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: CupertinoColors.systemGrey,
+    return Material( 
+      type: MaterialType.transparency,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40.0), // You can keep const here
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon( // You might need to remove const here too if the color is dynamic
+                CupertinoIcons.clock,
+                size: 48,
+                color: CupertinoColors.systemGrey3, 
               ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 8),
+              const SizedBox(height: 16), // This can stay const
 
-            // Instructional sub-text
-            Text(
-              'Routes you view on the map will appear here',
-              style: TextStyle(
-                fontSize: 15,
-                color: CupertinoColors.systemGrey2,
+              Text(
+                'No route history yet',
+                style: const TextStyle( // Remove const if using dynamic colors
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: CupertinoColors.systemGrey,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+              const SizedBox(height: 8),
+
+              Text(
+                'Routes you view on the map will appear here',
+                style: const TextStyle( // Remove const if using dynamic colors
+                  fontSize: 15,
+                  color: CupertinoColors.systemGrey2,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );

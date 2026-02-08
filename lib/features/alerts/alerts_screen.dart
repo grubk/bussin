@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -103,42 +104,45 @@ class _EmptyAlertsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 40.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Checkmark icon indicating good status
-            Icon(
-              CupertinoIcons.checkmark_shield,
-              size: 48,
-              color: CupertinoColors.systemGrey3,
-            ),
-            SizedBox(height: 16),
-
-            // Primary message
-            Text(
-              'No active service alerts',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: CupertinoColors.systemGrey,
+    return Material(
+      type: MaterialType.transparency,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Checkmark icon indicating good status
+              const Icon(
+                CupertinoIcons.checkmark_shield,
+                size: 48,
+                color: CupertinoColors.systemGrey3,
               ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 8),
+              const SizedBox(height: 16),
 
-            // Reassuring sub-text
-            Text(
-              'All transit services are running normally',
-              style: TextStyle(
-                fontSize: 15,
-                color: CupertinoColors.systemGrey2,
+              // Primary message
+              const Text(
+                'No active service alerts',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: CupertinoColors.systemGrey,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+              const SizedBox(height: 8),
+
+              // Reassuring sub-text
+              const Text(
+                'All transit services are running normally',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: CupertinoColors.systemGrey2,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );

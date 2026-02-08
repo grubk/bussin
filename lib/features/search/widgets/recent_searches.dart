@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -166,35 +167,38 @@ class RecentSearches extends ConsumerWidget {
 
   /// Empty state shown when the user has no route viewing history yet.
   Widget _buildEmptyState() {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              CupertinoIcons.search,
-              size: 48.0,
-              color: CupertinoColors.systemGrey3,
-            ),
-            SizedBox(height: 12.0),
-            Text(
-              'Search for a route or stop',
-              style: TextStyle(
-                color: CupertinoColors.systemGrey,
-                fontSize: 15.0,
+    return Material(
+      type: MaterialType.transparency,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                CupertinoIcons.search,
+                size: 48.0,
+                color: CupertinoColors.systemGrey3,
               ),
-            ),
-            SizedBox(height: 4.0),
-            Text(
-              'Your recently viewed routes will appear here.',
-              style: TextStyle(
-                color: CupertinoColors.systemGrey2,
-                fontSize: 13.0,
+              const SizedBox(height: 12.0),
+              const Text(
+                'Search for a route or stop',
+                style: TextStyle(
+                  color: CupertinoColors.systemGrey,
+                  fontSize: 15.0,
+                ),
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+              const SizedBox(height: 4.0),
+              const Text(
+                'Your recently viewed routes will appear here.',
+                style: TextStyle(
+                  color: CupertinoColors.systemGrey2,
+                  fontSize: 13.0,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
