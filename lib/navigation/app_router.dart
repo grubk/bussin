@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:bussin/features/search/search_screen.dart';
 import 'package:bussin/features/route_detail/route_detail_screen.dart';
 import 'package:bussin/features/stop_detail/stop_detail_screen.dart';
@@ -12,6 +12,7 @@ import 'package:bussin/features/settings/settings_screen.dart';
 /// ---------------------------------------------------------------------------
 /// Defines named routes for the app's navigation system.
 /// All screens are accessible via named routes that can be pushed
+/// onto the Material navigation stack.
 /// onto the Cupertino navigation stack.
 ///
 /// Routes:

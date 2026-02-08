@@ -1,6 +1,6 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
-/// Defines complete CupertinoThemeData for both light and dark modes.
+/// Defines complete Material 3 ThemeData for both light and dark modes.
 /// Uses TransLink brand blue as the primary color.
 class AppTheme {
   AppTheme._();
@@ -14,54 +14,128 @@ class AppTheme {
   /// Returns the appropriate CupertinoThemeData based on the given brightness.
   ///
   /// [brightness] determines whether to return light or dark theme configuration.
-  static CupertinoThemeData getTheme(Brightness brightness) {
-    if (brightness == Brightness.dark) {
-      return const CupertinoThemeData(
-        brightness: Brightness.dark,
-        primaryColor: _primaryDark,
-        scaffoldBackgroundColor: CupertinoColors.darkBackgroundGray,
-        barBackgroundColor: CupertinoColors.darkBackgroundGray,
-        textTheme: CupertinoTextThemeData(
-          primaryColor: _primaryDark,
-          textStyle: TextStyle(
-            color: CupertinoColors.white,
-            fontSize: 17.0,
+  static ThemeData getTheme(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+    final seed = isDark ? _primaryDark : _primaryLight;
+
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: seed,
+      brightness: brightness,
+    );
+
+    final base = ThemeData(
+      useMaterial3: true,
+      colorScheme: colorScheme,
+      brightness: brightness,
+      visualDensity: VisualDensity.standard,
+    );
+
+    const radius = 16.0;
+    const smallRadius = 12.0;
+
+    return base.copyWith(
+      scaffoldBackgroundColor:
+          isDark ? const Color(0xFF0D0F12) : const Color(0xFFF7F7F9),
+      cardTheme: base.cardTheme.copyWith(
+        color: isDark ? const Color(0xFF14171C) : Colors.white,
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radius),
+        ),
+      ),
+      dialogTheme: base.dialogTheme.copyWith(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radius),
+        ),
+      ),
+      bottomSheetTheme: base.bottomSheetTheme.copyWith(
+        showDragHandle: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(24),
           ),
-          navTitleTextStyle: TextStyle(
-            color: CupertinoColors.white,
-            fontSize: 17.0,
+        ),
+      ),
+      appBarTheme: base.appBarTheme.copyWith(
+        elevation: 0,
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        foregroundColor: colorScheme.onSurface,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: base.textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: colorScheme.onSurface,
+        ),
+      ),
+      navigationBarTheme: base.navigationBarTheme.copyWith(
+        elevation: 0,
+        height: 72,
+        backgroundColor: isDark ? const Color(0xFF111318) : Colors.white,
+        indicatorColor: colorScheme.primary.withValues(alpha: 0.12),
+        indicatorShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(999),
+        ),
+        labelTextStyle: WidgetStatePropertyAll(
+          base.textTheme.labelMedium?.copyWith(
             fontWeight: FontWeight.w600,
           ),
-          navLargeTitleTextStyle: TextStyle(
-            color: CupertinoColors.white,
-            fontSize: 34.0,
-            fontWeight: FontWeight.w700,
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(999),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(999),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
+      inputDecorationTheme: base.inputDecorationTheme.copyWith(
+        filled: true,
+        fillColor: isDark ? const Color(0xFF14171C) : Colors.white,
+        hintStyle: TextStyle(
+          color: colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w500,
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(smallRadius),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(smallRadius),
+          borderSide: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.35),
+            width: 1,
           ),
         ),
-      );
-    }
-
-    return const CupertinoThemeData(
-      brightness: Brightness.light,
-      primaryColor: _primaryLight,
-      scaffoldBackgroundColor: CupertinoColors.systemBackground,
-      barBackgroundColor: CupertinoColors.systemBackground,
-      textTheme: CupertinoTextThemeData(
-        primaryColor: _primaryLight,
-        textStyle: TextStyle(
-          color: CupertinoColors.black,
-          fontSize: 17.0,
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(smallRadius),
+          borderSide: BorderSide(
+            color: colorScheme.primary.withValues(alpha: 0.65),
+            width: 1.5,
+          ),
         ),
-        navTitleTextStyle: TextStyle(
-          color: CupertinoColors.black,
-          fontSize: 17.0,
-          fontWeight: FontWeight.w600,
+      ),
+      listTileTheme: base.listTileTheme.copyWith(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radius),
         ),
-        navLargeTitleTextStyle: TextStyle(
-          color: CupertinoColors.black,
-          fontSize: 34.0,
-          fontWeight: FontWeight.w700,
-        ),
+      ),
+      dividerTheme: base.dividerTheme.copyWith(
+        color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.35 : 0.6),
+        thickness: 1,
+        space: 1,
       ),
     );
   }

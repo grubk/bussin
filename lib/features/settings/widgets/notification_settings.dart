@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// ---------------------------------------------------------------------------
@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// ---------------------------------------------------------------------------
 /// Provides two controls for managing bus arrival notifications:
 ///
+/// 1. Switch to enable/disable notifications globally
 /// 1. CupertinoSwitch to enable/disable notifications globally
 ///    - When disabled, no arrival alerts will fire even if configured
 ///    - Persisted via SharedPreferences key 'notifications_enabled'
@@ -86,10 +87,14 @@ class _NotificationSettingsState extends State<NotificationSettings> {
   Widget build(BuildContext context) {
     // Show a loading indicator until SharedPreferences are loaded
     if (!_isLoaded) {
-      return const CupertinoListTile(
-        leading: Icon(CupertinoIcons.bell),
+      return const ListTile(
+        leading: Icon(Icons.notifications_none),
         title: Text('Loading...'),
-        trailing: CupertinoActivityIndicator(radius: 10),
+        trailing: SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
       );
     }
 
@@ -97,31 +102,21 @@ class _NotificationSettingsState extends State<NotificationSettings> {
     // individual list tiles, but we need two settings rows.
     return Column(
       children: [
-        // --- Global notification toggle ---
-        // Master switch that enables/disables all bus arrival notifications.
-        // When off, no alerts will fire regardless of individual alert settings.
-        CupertinoListTile(
-          leading: const Icon(CupertinoIcons.bell),
+        SwitchListTile(
+          secondary: const Icon(Icons.notifications_none),
           title: const Text('Enable Notifications'),
-          trailing: CupertinoSwitch(
-            value: _notificationsEnabled,
-            onChanged: _saveNotificationsEnabled,
-          ),
+          value: _notificationsEnabled,
+          onChanged: _saveNotificationsEnabled,
         ),
-
-        // --- Default alert threshold picker ---
-        // Only interactive when notifications are enabled. Allows the user
-        // to select how many minutes before arrival they want to be notified.
-        CupertinoListTile(
-          leading: const Icon(CupertinoIcons.timer),
+        const Divider(height: 1),
+        ListTile(
+          leading: const Icon(Icons.timer_outlined),
           title: const Text('Default Alert'),
-          // Show the currently selected threshold value
-          additionalInfo: Text('$_thresholdMinutes min'),
-          trailing: const CupertinoListTileChevron(),
-          // Disabled state when notifications are turned off
-          onTap: _notificationsEnabled
-              ? () => _showThresholdPicker(context)
-              : null,
+          subtitle: Text('$_thresholdMinutes min'),
+          trailing: const Icon(Icons.chevron_right),
+          enabled: _notificationsEnabled,
+          onTap:
+              _notificationsEnabled ? () => _showThresholdPicker(context) : null,
         ),
       ],
     );
@@ -133,38 +128,40 @@ class _NotificationSettingsState extends State<NotificationSettings> {
   /// buttons. The currently selected option is visually distinguished
   /// (not shown as an action to avoid re-selection).
   void _showThresholdPicker(BuildContext context) {
-    showCupertinoModalPopup<void>(
+    showModalBottomSheet<void>(
       context: context,
-      builder: (popupContext) => CupertinoActionSheet(
-        title: const Text('Alert Threshold'),
-        message:
-            const Text('How many minutes before arrival should we notify you?'),
-        actions: _thresholdOptions.map((minutes) {
-          // Determine if this option is currently selected
-          final isSelected = minutes == _thresholdMinutes;
-
-          return CupertinoActionSheetAction(
-            onPressed: () {
-              _saveThreshold(minutes);
-              Navigator.of(popupContext).pop();
-            },
-            child: Text(
-              '$minutes minute${minutes == 1 ? '' : 's'}',
-              style: TextStyle(
-                // Bold the currently selected option for visibility
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                color: isSelected
-                    ? CupertinoColors.activeBlue
-                    : CupertinoColors.label,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Alert Threshold',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
               ),
-            ),
-          );
-        }).toList(),
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.of(popupContext).pop(),
-          child: const Text('Cancel'),
-        ),
-      ),
+              ..._thresholdOptions.map((minutes) {
+                final isSelected = minutes == _thresholdMinutes;
+                return ListTile(
+                  title: Text('$minutes minute${minutes == 1 ? '' : 's'}'),
+                  trailing: isSelected ? const Icon(Icons.check) : null,
+                  onTap: () {
+                    _saveThreshold(minutes);
+                    Navigator.of(sheetContext).pop();
+                  },
+                );
+              }),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
     );
   }
 }

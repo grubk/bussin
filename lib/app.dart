@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:bussin/core/theme/app_theme.dart';
@@ -9,15 +9,14 @@ import 'package:bussin/navigation/bottom_nav_bar.dart';
 /// ---------------------------------------------------------------------------
 /// BussinApp - Root application widget
 /// ---------------------------------------------------------------------------
-/// The top-level [ConsumerWidget] that configures the [CupertinoApp].
+/// The top-level [ConsumerWidget] that configures the [MaterialApp].
 ///
 /// Responsibilities:
 /// - Watches [themeProvider] to apply light/dark theme dynamically
 /// - Registers all named routes from [AppRouter]
 /// - Sets [MainScaffold] (bottom tab bar with Map/Favorites/Settings) as home
 ///
-/// Uses [CupertinoApp] (not MaterialApp) for a consistent iOS-style UI
-/// across all screens, matching the design spec.
+/// Uses [MaterialApp] for a consistent Material 3 UI across all screens.
 /// ---------------------------------------------------------------------------
 class BussinApp extends ConsumerWidget {
   const BussinApp({super.key});
@@ -27,20 +26,17 @@ class BussinApp extends ConsumerWidget {
     // Watch the theme brightness to rebuild when user toggles light/dark mode
     final brightness = ref.watch(themeProvider);
 
-    return CupertinoApp(
-      // App title shown in the OS task switcher
+    final themeMode = brightness == Brightness.dark
+        ? ThemeMode.dark
+        : ThemeMode.light;
+
+    return MaterialApp(
       title: 'Bussin!',
-
-      // Apply the correct theme based on current brightness setting
-      theme: AppTheme.getTheme(brightness),
-
-      // Register all named routes for push navigation
+      theme: AppTheme.getTheme(Brightness.light),
+      darkTheme: AppTheme.getTheme(Brightness.dark),
+      themeMode: themeMode,
       routes: AppRouter.routes,
-
-      // Main scaffold with bottom tab bar (Map / Favorites / Settings)
       home: const MainScaffold(),
-
-      // Disable the debug banner in the top-right corner
       debugShowCheckedModeBanner: false,
     );
   }

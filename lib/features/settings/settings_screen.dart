@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:bussin/features/settings/widgets/theme_toggle.dart';
@@ -8,7 +8,7 @@ import 'package:bussin/features/settings/widgets/about_section.dart';
 /// ---------------------------------------------------------------------------
 /// SettingsScreen - App configuration and information
 /// ---------------------------------------------------------------------------
-/// Provides grouped settings sections using Cupertino iOS-style list sections:
+/// Provides grouped settings sections using Material Design:
 ///
 /// Section 1: Appearance
 ///   - ThemeToggle widget (light / dark / system segmented control)
@@ -46,99 +46,93 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      // --- Navigation bar with screen title ---
-      navigationBar: const CupertinoNavigationBar(
-        middle: Text('Settings'),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Settings'),
       ),
-
-      // --- Scrollable content with grouped sections ---
-      child: SafeArea(
+      body: SafeArea(
         child: ListView(
+          padding: const EdgeInsets.all(16),
           children: [
-            // ================================================================
-            // Section 1: Appearance
-            // ================================================================
-            // Contains the theme toggle (light/dark/system) using a
-            // CupertinoSlidingSegmentedControl.
-            CupertinoListSection.insetGrouped(
-              header: const Text('APPEARANCE'),
-              children: const [
-                // ThemeToggle reads themeProvider and writes via the notifier
-                ThemeToggle(),
-              ],
+            Text(
+              'APPEARANCE',
+              style: Theme.of(context).textTheme.labelLarge,
             ),
-
-            // ================================================================
-            // Section 2: Notifications
-            // ================================================================
-            // Global notification toggle and default alert threshold picker.
-            CupertinoListSection.insetGrouped(
-              header: const Text('NOTIFICATIONS'),
-              children: const [
-                // NotificationSettings manages its own SharedPreferences state
-                NotificationSettings(),
-              ],
+            const SizedBox(height: 8),
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 4),
+                child: ThemeToggle(),
+              ),
             ),
-
-            // ================================================================
-            // Section 3: Data
-            // ================================================================
-            // Controls for refreshing and clearing cached GTFS transit data.
-            CupertinoListSection.insetGrouped(
-              header: const Text('DATA'),
-              children: [
-                // --- Refresh Transit Data button ---
-                // Re-downloads the GTFS static ZIP from TransLink and
-                // repopulates the local SQLite database.
-                CupertinoListTile(
-                  leading: const Icon(CupertinoIcons.arrow_clockwise),
-                  title: const Text('Refresh Transit Data'),
-                  // Show spinner when refresh is in progress
-                  trailing: _isRefreshing
-                      ? const CupertinoActivityIndicator(radius: 10)
-                      : null,
-                  onTap: _isRefreshing ? null : _refreshTransitData,
-                ),
-
-                // --- Last updated info ---
-                // Shows when the GTFS static data was last refreshed.
-                CupertinoListTile(
-                  leading: const Icon(CupertinoIcons.info_circle),
-                  title: const Text('Last Updated'),
-                  additionalInfo: Text(_lastUpdated),
-                ),
-
-                // --- Clear Cache button ---
-                // Wipes all locally cached data (GTFS, preferences, etc.).
-                CupertinoListTile(
-                  leading: const Icon(
-                    CupertinoIcons.trash,
-                    color: CupertinoColors.destructiveRed,
+            const SizedBox(height: 16),
+            Text(
+              'NOTIFICATIONS',
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+            const SizedBox(height: 8),
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 4),
+                child: NotificationSettings(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'DATA',
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+            const SizedBox(height: 8),
+            Card(
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.refresh),
+                    title: const Text('Refresh Transit Data'),
+                    trailing: _isRefreshing
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : null,
+                    onTap: _isRefreshing ? null : _refreshTransitData,
                   ),
-                  title: const Text(
-                    'Clear Cache',
-                    style: TextStyle(color: CupertinoColors.destructiveRed),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.info_outline),
+                    title: const Text('Last Updated'),
+                    trailing: Text(_lastUpdated),
                   ),
-                  onTap: () => _confirmClearCache(context),
-                ),
-              ],
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: Icon(
+                      Icons.delete_outline,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    title: Text(
+                      'Clear Cache',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                    onTap: () => _confirmClearCache(context),
+                  ),
+                ],
+              ),
             ),
-
-            // ================================================================
-            // Section 4: About
-            // ================================================================
-            // App info, TransLink attribution, and open-source licenses.
-            CupertinoListSection.insetGrouped(
-              header: const Text('ABOUT'),
-              children: const [
-                // AboutSection displays app name, version, attributions,
-                // and a licenses button.
-                AboutSection(),
-              ],
+            const SizedBox(height: 16),
+            Text(
+              'ABOUT',
+              style: Theme.of(context).textTheme.labelLarge,
             ),
-
-            // Bottom padding for comfortable scrolling
+            const SizedBox(height: 8),
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 4),
+                child: AboutSection(),
+              ),
+            ),
             const SizedBox(height: 40),
           ],
         ),
@@ -169,29 +163,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   /// Warns the user that this will require re-downloading transit data
   /// on the next app launch, which may use mobile data.
   void _confirmClearCache(BuildContext context) {
-    showCupertinoDialog<void>(
+    showDialog<void>(
       context: context,
-      builder: (dialogContext) => CupertinoAlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Clear Cache'),
         content: const Text(
           'This will remove all cached transit data. '
           'The app will need to re-download data on next launch.',
         ),
         actions: [
-          // Cancel - dismiss without action
-          CupertinoDialogAction(
-            child: const Text('Cancel'),
+          TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
           ),
-          // Clear - wipe cached data
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            child: const Text('Clear'),
+          TextButton(
             onPressed: () {
-              // TODO: Call cache clearing logic via a repository/service
               Navigator.of(dialogContext).pop();
               setState(() => _lastUpdated = 'Never');
             },
+            child: Text(
+              'Clear',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
           ),
         ],
       ),

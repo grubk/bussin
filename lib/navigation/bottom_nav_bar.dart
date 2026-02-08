@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bussin/features/map/map_screen.dart';
 import 'package:bussin/features/favorites/favorites_screen.dart';
@@ -7,12 +7,12 @@ import 'package:bussin/features/settings/settings_screen.dart';
 /// ---------------------------------------------------------------------------
 /// Bottom Navigation Bar
 /// ---------------------------------------------------------------------------
-/// Three-tab bottom navigation using [CupertinoTabScaffold].
+/// Three-tab bottom navigation using Material 3 NavigationBar and IndexedStack.
 ///
 /// Tabs:
-///   0 - Map      (CupertinoIcons.map)       -> MapScreen
-///   1 - Favorites (CupertinoIcons.star)      -> FavoritesScreen
-///   2 - Settings  (CupertinoIcons.gear)      -> SettingsScreen
+///   0 - Map      (Icons.map)       -> MapScreen
+///   1 - Favorites (Icons.star)      -> FavoritesScreen
+///   2 - Settings  (Icons.settings)  -> SettingsScreen
 ///
 /// Each tab maintains its own navigation stack so the user can push
 /// screens within a tab without losing state in other tabs.
@@ -23,54 +23,50 @@ import 'package:bussin/features/settings/settings_screen.dart';
 
 /// Main scaffold widget that wraps the app's bottom tab navigation.
 ///
-/// Uses [CupertinoTabScaffold] with three tabs, each containing its
-/// own [CupertinoTabView] for independent navigation stacks.
-class MainScaffold extends ConsumerWidget {
+/// Uses Material 3 NavigationBar with three tabs, each containing its
+/// own IndexedStack for independent navigation stacks.
+class MainScaffold extends ConsumerStatefulWidget {
   const MainScaffold({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return CupertinoTabScaffold(
-      // Configure the bottom tab bar with three items
-      tabBar: CupertinoTabBar(
-        items: const <BottomNavigationBarItem>[
-          // Tab 0: Map - the main map screen showing live buses
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.map),
+  ConsumerState<MainScaffold> createState() => _MainScaffoldState();
+}
+
+class _MainScaffoldState extends ConsumerState<MainScaffold> {
+  int _index = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: _index,
+        children: const [
+          MapScreen(),
+          FavoritesScreen(),
+          SettingsScreen(),
+        ],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _index,
+        onDestinationSelected: (value) => setState(() => _index = value),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.map_outlined),
+            selectedIcon: Icon(Icons.map),
             label: 'Map',
           ),
-          // Tab 1: Favorites - bookmarked stops with live ETAs
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.star),
+          NavigationDestination(
+            icon: Icon(Icons.star_outline),
+            selectedIcon: Icon(Icons.star),
             label: 'Favorites',
           ),
-          // Tab 2: Settings - theme, notifications, about
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.gear),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
             label: 'Settings',
           ),
         ],
       ),
-      // Build each tab's content in its own navigation context
-      tabBuilder: (BuildContext context, int index) {
-        return CupertinoTabView(
-          builder: (BuildContext context) {
-            switch (index) {
-              case 0:
-                // Map tab: full-screen map with bus markers, search, overlays
-                return const MapScreen();
-              case 1:
-                // Favorites tab: list of bookmarked stops with live arrival data
-                return const FavoritesScreen();
-              case 2:
-                // Settings tab: theme toggle, notification prefs, about section
-                return const SettingsScreen();
-              default:
-                return const MapScreen();
-            }
-          },
-        );
-      },
     );
   }
 }
