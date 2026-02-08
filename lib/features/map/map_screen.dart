@@ -79,12 +79,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       // --- Transparent navigation bar so the map renders underneath ---
       // This creates an immersive full-screen map experience while still
       // providing standard Cupertino nav bar actions at the top.
-      navigationBar: CupertinoNavigationBar(
-        // Transparent background lets the map show through
-        backgroundColor: const Color(0x00000000),
-        border: null, // Remove the default bottom border
-
-        // --- Leading: History button (clock icon) ---
+      navigationBar: _TopBar(
         leading: CupertinoButton(
           padding: EdgeInsets.zero,
           onPressed: () => AppRouter.pushHistory(context),
@@ -130,7 +125,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               bottom: false,
               child: Padding(
                 // Extra top padding to sit below the transparent nav bar
-                padding: const EdgeInsets.only(top: 8, left: 16, right: 16),
+                padding: const EdgeInsets.only(top: 16, left: 16, right: 16),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -222,6 +217,51 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       isDismissible: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const NearbyStopsSheet(),
+    );
+  }
+}
+
+class _TopBar extends StatelessWidget
+    implements ObstructingPreferredSizeWidget {
+  final Widget leading;
+  final Widget trailing;
+
+  const _TopBar({
+    required this.leading,
+    required this.trailing,
+  });
+
+  @override
+  Size get preferredSize => const Size.fromHeight(56);
+
+  @override
+  bool shouldFullyObstruct(BuildContext context) => false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final backgroundColor =
+        theme.navigationBarTheme.backgroundColor ?? theme.colorScheme.surface;
+
+    return Container(
+      color: backgroundColor,
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: preferredSize.height,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                leading,
+                trailing,
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
