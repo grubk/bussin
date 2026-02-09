@@ -1,5 +1,9 @@
 <div align="center">
 
+[![Watch the video](https://img.youtube.com/vi/Yw8wcUWkJ7I/maxresdefault.jpg)](https://youtu.be/Yw8wcUWkJ7I)
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/Yw8wcUWkJ7I" title="bussin! App Demo" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
 <img src="assets/app_icon_white.png" alt="bussin! Icon" width="144" height="144">
 
 # bussin!
